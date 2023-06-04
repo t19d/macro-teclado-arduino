@@ -1,9 +1,11 @@
 #include <Keypad.h>
 #include <Encoder.h>
 #include <Bounce2.h>
+#define HID_CUSTOM_LAYOUT
+#define LAYOUT_SPANISH
 #include "HID-Project.h"
 
-//Keypad buttons
+// Keypad buttons
 const int R1 = 14;
 const int R2 = 16;
 const int R3 = 10;
@@ -22,7 +24,7 @@ byte rowPins[ROWS] = { R1, R2, R3, R4 };
 byte colPins[COLS] = { C1, C2, C3 };
 Keypad kpd = Keypad(makeKeymap(keys), colPins, rowPins, COLS, ROWS);
 
-//State LED pins
+// State LED pins
 const int S1 = 2;
 const int S2 = 3;
 const int S3 = 4;
@@ -30,7 +32,7 @@ const int numStates = 3;
 const int States[numStates] = { S1, S2, S3 };
 int currentState = 0;
 
-//Encoder
+// Encoder
 const int SW = 18;
 const int DT = 15;
 const int CLK = 5;
@@ -60,22 +62,18 @@ void setup() {
   Keyboard.begin();
   Consumer.begin();
 
-  Serial.println("Ready");
-
   StartAnimation();
   digitalWrite(States[currentState], HIGH);
   delay(500);
-  Serial.println("setup");
 }
 
 // *****************************
 //             LOOP
 // *****************************
 void loop() {
-  //check the key matrix first
+  // Check the key matrix first
   char key = kpd.getKey();
   if (key) {
-    Serial.println(key);
     switch (key) {
       case '*':
         ChangeState();
@@ -108,13 +106,13 @@ void loop() {
       default:
         switch (currentState) {
           case 0:
-            LayoutLocal(key);
+            LayoutWebs(key);
             break;
           case 1:
             LayoutTrabajar(key);
             break;
           case 2:
-            Layout3(key);
+            LayoutOtro(key);
             break;
         }
     }
@@ -122,47 +120,34 @@ void loop() {
     Keyboard.releaseAll();
   }
 
-  //check the encoder button
+  // Check the encoder button
   if (encoderButton.update()) {
-    Serial.print("encoderButton.update");
     if (encoderButton.fallingEdge()) {
       int fall = millis();
       while (!encoderButton.update()) {}
       if (encoderButton.risingEdge()) {
         int rise = millis();
-        //Serial.println(rise - fall);
         if (rise - fall > timeLimit) {
           Consumer.write(MEDIA_NEXT);
-          Serial.print("Next");
         } else {
           Consumer.write(MEDIA_PLAY_PAUSE);
-          Serial.print("Play/Pause");
         }
       }
       Keyboard.releaseAll();
     }
   }
 
-  //check encoder rotation
+  // Check encoder rotation
   long newPosition = encoder.read();
   if (abs(newPosition - oldPosition) > threshold) {
-    Serial.print("newPosition ");
-    Serial.println(newPosition);
-    Serial.print("oldPosition ");
-    Serial.println(oldPosition);
-
     if ((newPosition - oldPosition) > 0) {
-      //volumeup
-      Serial.println("volume up");
-      Consumer.write(MEDIA_VOLUME_UP);
+      Consumer.write(MEDIA_VOLUME_UP); // volumeup
     } else {
-      //volumedown
-      Serial.println("volume down");
-      Consumer.write(MEDIA_VOLUME_DOWN);
+      Consumer.write(MEDIA_VOLUME_DOWN); // volumedown
     }
     oldPosition = newPosition;
     Keyboard.releaseAll();
-    delay(delayDefault);  //a delay of 200 seems to be the sweet spot for this encoder.
+    delay(delayDefault);
   }
 }
 
@@ -192,7 +177,7 @@ void ChangeState() {
   return;
 }
 
-void LayoutLocal(char button) {
+void LayoutWebs(char button) {
   switch (button) {
     case '1':
       openWithWinR("chrome https://www.disneyplus.com/");
@@ -224,7 +209,7 @@ void LayoutTrabajar(char button) {
       openWithWinR("firefox");
       break;
     case '3':
-      openWithWinR("edge");
+      openWithWinR("msedge");
       break;
     case '4':
       openWithWinR("code");
@@ -240,7 +225,7 @@ void LayoutTrabajar(char button) {
   };
 }
 
-void Layout3(char button) {
+void LayoutOtro(char button) {
   switch (button) {
     case '1':
       openWithWinR("chrome");
